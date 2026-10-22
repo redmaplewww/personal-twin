@@ -1,0 +1,6 @@
+*.kdbx
+*.enc
+.autounlock
+MASTER-PASSWORD.txt
+audit.log
+inventory/
