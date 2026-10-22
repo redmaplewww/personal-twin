@@ -7,7 +7,7 @@ AI-agent-safe personal data twin: a local git repo + KeePassXC vault + one CLI (
 Plaintext secrets should never enter an AI conversation. `twin` enforces this structurally:
 
 - **consume**: `twin inject <entry> --env VAR -- <cmd>` decrypts from the vault and injects the value **directly into the child process environment** (or stdin). The agent only sees the child's output.
-- **intake**: `twin form` (or `--mode batch`) serves a one-shot local web page; the user fills it in the browser and values go straight into the vault — the agent only receives entry names and status JSON.
+- **intake**: `twin form` (single) or `--mode batch` (multi-entry grid, one submit) serves a one-shot local web page; values go straight from the browser into the vault — the agent only receives per-row status JSON. Duplicate/missing titles are rejected per row.
 - **register**: one-shot CLI intake that also updates the account ledger, leak-audit tokens, runs an audit and a backup.
 - **audit**: scans your cloud-synced folders for leaked PII tokens (regenerated weekly via scheduled task), allowlist for intentionally-public items.
 - **backup**: AES-256 encrypted copy of contacts + vault snapshots + git commit; verified by decrypt roundtrip.
@@ -43,6 +43,13 @@ Environment: `TWIN_HOME` (repo root), `TWIN_BACKUP_DEST` (encrypted backup desti
 ## Wiring it into your agents
 
 Add the four-layer rule to your global `AGENTS.md` (see SKILL.md), drop `SKILL.md` into your skills directory, and put `twin.py` on PATH. From then on every session knows: consume via `inject`, intake via `form`/`register`, never `get`, never write secrets to synced files.
+
+## Security hardening (v1.1)
+
+- `twin list` masks email/phone-shaped usernames before printing (no PII into agent context)
+- unlock session file stores the master password **DPAPI-encrypted**, never plaintext
+- `inject` chains: `python twin.py inject A --field url --env BASE -- python twin.py inject A --env KEY -- cmd` injects multiple fields into one child process
+- every retrieval/intake/approach logs to `audit.log` (titles only, never values)
 
 ## Threat model (honest version)
 

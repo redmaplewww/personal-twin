@@ -14,8 +14,8 @@ description: 个人数字孪生操作入口——查个人信息/联系方式/�
 | 查公开身份/公开账号 | 读 `%TWIN_HOME%\profile.md`（或问 mem0 类记忆服务） |
 | 查手机/邮箱/微信/QQ | 读 `%TWIN_HOME%\contacts.md`（L1，禁止外传上云） |
 | 查账号归属/服务器/MCP/SSH 指纹 | 读 `accounts.md` + `inventory\` |
-| **在命令中使用凭据** | `twin inject <条目> --env VAR -- <命令>`（值注入子进程 env；省略 --env 则进 stdin）。**AI 取值唯一合法路径**。autounlock 开启时全程免人工 |
-| 列凭据条目 | `twin list`（无密值） |
+| **在命令中使用凭据** | `twin inject <条目> --env VAR -- <命令>`（值注入子进程 env；省略 --env 则进 stdin）。**AI 取值唯一合法路径**。autounlock 开启时全程免人工。**多字段（base+key）用 inject 链**：`python twin.py inject A --field url --env BASE -- python twin.py inject A --env KEY -- python 脚本.py` |
+| 列凭据条目 | `twin list`（无密值；username 中邮箱/手机自动打码） |
 | **新凭据入库（AI 主导）** | `twin form <条目> --group X --mode batch --field title=平台名 --field url="Base URL" --field apikey="API Key"` → 把 URL 给用户浏览器填写 → stdout 只收逐条状态。**AI 不得对该页面做 DOM snapshot/截图**（会回显已填值） |
 | 新凭据入库（用户自己） | `twin register <条目> ... --token 新L1令牌`（自动联动 accounts.md + audit-tokens + audit + backup） |
 | 备份 | `twin backup`（加密 contacts → `%TWIN_BACKUP_DEST%` + kdbx 副本 + git） |

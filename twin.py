@@ -114,7 +114,8 @@ def _try_session():
     try:
         d = json.load(io.open(SESSION, encoding="utf-8"))
         if d.get("exp", 0) > time.time():
-            return d["pw"]
+            import base64
+            return _dpapi(base64.b64decode(d["pw"]), protect=False).decode("utf-8")
         os.remove(SESSION)
     except Exception:
         pass
@@ -232,8 +233,9 @@ def cmd_unlock(args):
     except Exception:
         log("主密码错误")
         sys.exit(3)
+    import base64
     with io.open(SESSION, "w", encoding="utf-8") as f:
-        json.dump({"pw": pw, "exp": time.time() + args.ttl}, f)
+        json.dump({"pw": base64.b64encode(_dpapi(pw.encode("utf-8"), protect=True)).decode(), "exp": time.time() + args.ttl}, f)
     try:
         os.chmod(SESSION, 0o600)
     except OSError:
@@ -260,6 +262,19 @@ def _find(kp, title):
     return sub
 
 
+def _mask_user(u):
+    """list 输出防 L1 泄露：邮箱/手机形态打码，其余原样（平台句柄非 PII）。"""
+    if not u:
+        return "-"
+    if "@" in u:
+        local, _, dom = u.partition("@")
+        return (local[:2] + "***@" + dom) if len(local) > 2 else ("***@" + dom)
+    import re as _re
+    if _re.fullmatch(r"1[3-9]\d{9}", u):
+        return u[:3] + "****" + u[-4:]
+    return u
+
+
 def cmd_list(args):
     kp = open_kdbx()
     rows = []
@@ -267,9 +282,9 @@ def cmd_list(args):
         g = "/".join(p.name for p in _path(e)) if hasattr(e, "group") else ""
         if args.group and args.group.lower() not in g.lower():
             continue
-        rows.append((g, e.title, e.username or "", "●" if e.password else "○"))
+        rows.append((g, e.title, _mask_user(e.username), "●" if e.password else "○"))
     for g, t, u, has in sorted(rows):
-        log(f"  [{g}] {t:44s} user={u or '-':28s} pw={'有' if has=='●' else '无'}")
+        log(f"  [{g}] {t:44s} user={u:28s} pw={'有' if has=='●' else '无'}")
     log(f"共 {len(rows)} 条")
 
 
